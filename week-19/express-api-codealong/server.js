@@ -2,7 +2,9 @@ import express from "express";
 import cors from "cors";
 import listEndpoints from "express-list-endpoints";
 
-import flowerData from "./data/flowers.json" with { type: "json" };
+import flowerJson from "./data/flowers.json" with { type: "json" };
+
+let flowerData = flowerJson //Jsonfilen finns i minnet på databasen. 
 
 const port = process.env.PORT || 8080; //definierar vilken port vi använder
 const app = express(); //startar express
@@ -60,6 +62,55 @@ app.get("/flowers/:id", (req, res) => {
   }
   res.json(flower);
 })
+
+//create a new flower. body kommer från postman, det är där vi skapar den nya flowern. Json
+app.post("/flowers", (req, res) => {
+  const body = req.body;
+
+  // 1. Validation on the body that we will add to de DB. 
+  // 2. if the validation does not go through, then respond with an error. 
+  // 3. create a unique ID, not just take the length of the db entries.
+
+  const newFlower = {
+    id: flowerData.length + 1,
+    name: body.name,
+    scientificName: body.scientificName,
+    botanicalFamily: body.botanicalFamily,
+    color: body.color,
+    isSpotted: body.isSpotted,
+    scent: body.scent,
+    size: body.size,
+    symbolism: body.symbolism,
+    lastSpottedTimestamp: body.lastSpottedTimestamp,
+  };
+
+  flowerData.push(newFlower)
+
+  res.json(newFlower)
+})
+
+//Delete a flower. Görs också i Postman. Klicka delete till höger, och
+
+app.delete("/flowers/:id", (req, res) => {
+  const id = req.params.id
+  const flower = flowerData.find((flower) => Number(flower.id) === Number(id)); //säkra att det är ett nummer under id, då det annars blir en string? 
+
+
+  // om det inte finns någon flower, visa error meddelande. 
+  if (!flower) {
+    return res
+      .status(404)
+      .json({ error: `flower with id ${id} does not exist` });
+  }
+
+  const newFlowers = flowerData.filter(
+    (flower) => Number(flower.id) !== Number(id)
+  );
+
+  flowerData = newFlowers;
+
+  res.json(flower);
+});
 
 
 // Start the server
